@@ -1,0 +1,57 @@
+version: '3.3'
+
+services:
+  telegraf:
+    image: telegraf:1.16
+    container_name: telegraf
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - './telegraf/telegraf.conf:/etc/telegraf/telegraf.conf'
+    links:
+      - influxdb
+    ports:
+      - "8092:8092/udp"
+      - "8094:8094"
+      - "8125:8125/udp"
+    networks:
+      - tick
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    restart: always
+    volumes:
+      - ./influxdb/data:/var/lib/influxdb
+    ports:
+      - "8086:8086"
+    networks:
+      - tick
+
+  chronograf:
+    image: chronograf:1.8
+    container_name: chronograf
+    restart: always
+    environment:
+      INFLUXDB_URL: http://influxdb:8086
+    volumes:
+      - ./chronograf/data:/var/lib/chronograf
+    ports:
+      - "8888:8888"
+    links:
+      - influxdb
+    networks:
+      - tick
+
+  theia:
+    image: brjapon/theia-arm64
+    restart: always
+    ports:
+      - '8000:3000'
+    volumes:
+      - './theia/:/home/project'
+    container_name: theia
+
+networks:
+  tick:
+    driver: bridge
